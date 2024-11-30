@@ -21,7 +21,16 @@ defmodule DNS.Server do
       end
 
       def init([port]) do
-        {:ok, socket} = :gen_udp.open(port, [{:active, true}, {:mode, :binary}])
+        # try to get the IP address of the fly-global-services service,
+        # but fallback to not binding to any specific IP address
+        case :inet.getaddr(~c"fly-global-services", :inet) do
+          {:ok, addr} ->
+            {:ok, socket} = :gen_udp.open(port, [{:active, true}, {:mode, :binary}, {:ip, addr}])
+
+          _ ->
+            {:ok, socket} = :gen_udp.open(port, [{:active, true}, {:mode, :binary}])
+        end
+
         IO.puts("Server listening at #{port}")
 
         # accept_loop(socket, handler)
